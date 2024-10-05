@@ -1,0 +1,17 @@
+{
+    "manifest_version": 3,
+    "name": "Desk Saver",
+    "version": "1.0",
+    "description": "Save and restore browser windows and tabs as desks.",
+    "permissions": [
+      "tabs",
+      "storage"
+    ],
+    "background": {
+      "service_worker": "background.js"
+    },
+    "action": {
+      "default_popup": "popup.html"
+    }
+  }
+  
