@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Save Tabs</title>
+  <meta charset="utf-8">
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background-color: #f5f5f5;
+    }
+    
+    .container {
+      max-width: 400px;
+      margin: 0 auto;
+      background-color: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      padding: 20px;
+    }
+    
+    h2 {
+      font-size: 18px;
+      color: #3c4043;
+      margin-top: 0;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+    
+    .form-group {
+      margin-bottom: 15px;
+    }
+    
+    label {
+      display: block;
+      margin-bottom: 5px;
+      font-size: 14px;
+      font-weight: 500;
+      color: #3c4043;
+    }
+    
+    input, select {
+      width: 100%;
+      padding: 8px 12px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 14px;
+      box-sizing: border-box;
+    }
+    
+    .button-group {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-top: 20px;
+    }
+    
+    button {
+      padding: 8px 16px;
+      border: none;
+      border-radius: 4px;
+      font-size: 14px;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+    
+    #save-button {
+      background-color: #4285f4;
+      color: white;
+    }
+    
+    #save-button:hover {
+      background-color: #3367d6;
+    }
+    
+    #cancel-button {
+      background-color: #5f6368;
+      color: white;
+    }
+    
+    #cancel-button:hover {
+      background-color: #4a4d51;
+    }
+    
+    .tabs-info {
+      font-size: 13px;
+      color: #5f6368;
+      margin-top: 15px;
+      text-align: center;
+    }
+    
+    .sync-container {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-top: 15px;
+      font-size: 13px;
+      color: #5f6368;
+    }
+    
+    .sync-toggle {
+      position: relative;
+      display: inline-block;
+      width: 30px;
+      height: 16px;
+      margin-right: 8px;
+    }
+    
+    .sync-toggle input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+    
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: #ccc;
+      transition: .4s;
+      border-radius: 34px;
+    }
+    
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 12px;
+      width: 12px;
+      left: 2px;
+      bottom: 2px;
+      background-color: white;
+      transition: .4s;
+      border-radius: 50%;
+    }
+    
+    input:checked + .slider {
+      background-color: #4285f4;
+    }
+    
+    input:focus + .slider {
+      box-shadow: 0 0 1px #4285f4;
+    }
+    
+    input:checked + .slider:before {
+      transform: translateX(14px);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>Save Current Tabs</h2>
+    
+    <div class="form-group">
+      <label for="workspace-name">Workspace Name:</label>
+      <input type="text" id="workspace-name" autofocus>
+    </div>
+    
+    <div class="form-group">
+      <label for="workspace-category">Category:</label>
+      <select id="workspace-category">
+        <option value="">No Category</option>
+      </select>
+    </div>
+    
+    <div class="tabs-info">
+      Saving <span id="tab-count">0</span> tabs from the current window.
+    </div>
+    
+    <div class="sync-container">
+      <label class="sync-toggle">
+        <input type="checkbox" id="sync-toggle">
+        <span class="slider"></span>
+      </label>
+      <span>Sync across devices</span>
+    </div>
+    
+    <div class="button-group">
+      <button id="cancel-button">Cancel</button>
+      <button id="save-button">Save</button>
+    </div>
+  </div>
+  
+  <script src="save-dialog.js" type="module"></script>
+</body>
+</html> 

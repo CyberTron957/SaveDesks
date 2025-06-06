@@ -3,8 +3,28 @@
   "name": "Save Tabs",
   "version": "1.0",
   "description": "Save and restore sets of tabs as named workspaces",
-  "permissions": ["tabs", "storage", "windows"],
+  "permissions": ["tabs", "storage", "windows", "notifications"],
   "action": {
     "default_popup": "popup.html"
+  },
+  "commands": {
+    "save-current-tabs": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+S",
+        "mac": "Command+Shift+S"
+      },
+      "description": "Save current tabs as a workspace"
+    },
+    "open-tab-manager": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+T",
+        "mac": "Command+Shift+T"
+      },
+      "description": "Open the tab workspace manager"
+    }
+  },
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
   }
 } 

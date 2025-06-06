@@ -9,19 +9,89 @@
   <div class="container">
     <div class="header">
       <h1>Save Tabs</h1>
+      <div class="sync-container">
+        <label class="sync-toggle">
+          <input type="checkbox" id="sync-toggle">
+          <span class="slider"></span>
+        </label>
+        <span class="sync-label">Sync</span>
+      </div>
     </div>
     
     <div class="save-section">
-      <input type="text" id="workspace-name" placeholder="Workspace Name">
-      <button id="save-tabs">Save Current Tabs</button>
+      <div class="input-group">
+        <input type="text" id="workspace-name" placeholder="Workspace Name">
+        <div class="category-select-container">
+          <select id="workspace-category">
+            <option value="">No Category</option>
+          </select>
+          <button id="add-category" title="Add New Category">+</button>
+        </div>
+      </div>
+      <div class="save-buttons">
+        <button id="save-tabs">Save New</button>
+        <button id="update-tabs">Update Existing</button>
+      </div>
+    </div>
+    
+    <div class="actions-section">
+      <button id="export-workspaces">Export All</button>
+      <button id="import-workspaces">Import</button>
+      <input type="file" id="import-file" accept=".json" style="display: none;">
+    </div>
+    
+    <div class="filter-section">
+      <div class="search-container">
+        <input type="text" id="search-workspaces" placeholder="Search workspaces...">
+        <button id="clear-search" title="Clear Search">&times;</button>
+      </div>
+      <select id="category-filter">
+        <option value="all">All Categories</option>
+        <option value="">No Category</option>
+      </select>
     </div>
     
     <div class="workspaces-section">
       <h2>Your Workspaces</h2>
       <div id="workspaces-list"></div>
     </div>
+    
+    <div class="shortcuts-section">
+      <h3>Keyboard Shortcuts</h3>
+      <div class="shortcut-item">
+        <span class="shortcut-key">Ctrl+Shift+S</span>
+        <span class="shortcut-desc">Save current tabs</span>
+      </div>
+      <div class="shortcut-item">
+        <span class="shortcut-key">Ctrl+Shift+T</span>
+        <span class="shortcut-desc">Open tab manager</span>
+      </div>
+      <div class="shortcut-note">
+        Mac users: Use <span class="shortcut-key">⌘</span> instead of Ctrl
+      </div>
+    </div>
   </div>
   
-  <script src="popup.js"></script>
+  <!-- Update Workspace Modal -->
+  <div id="update-modal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Update Workspace</h2>
+        <span class="close-modal">&times;</span>
+      </div>
+      <div class="modal-body">
+        <p>Select a workspace to update with the current tabs:</p>
+        <select id="update-workspace-select">
+          <option value="">Select a workspace</option>
+        </select>
+      </div>
+      <div class="modal-footer">
+        <button id="confirm-update">Update</button>
+        <button id="cancel-update">Cancel</button>
+      </div>
+    </div>
+  </div>
+  
+  <script src="popup.js" type="module"></script>
 </body>
 </html> 
