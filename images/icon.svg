@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">
+  <!-- Background -->
+  <rect width="128" height="128" rx="16" fill="#4285f4"/>
+  
+  <!-- Tab Stack -->
+  <rect x="24" y="30" width="80" height="60" rx="8" fill="white"/>
+  <rect x="34" y="44" width="60" height="4" rx="2" fill="#4285f4"/>
+  <rect x="34" y="54" width="60" height="4" rx="2" fill="#4285f4"/>
+  <rect x="34" y="64" width="60" height="4" rx="2" fill="#4285f4"/>
+  <rect x="34" y="74" width="40" height="4" rx="2" fill="#4285f4"/>
+  
+  <!-- Bookmark/Save Icon -->
+  <path d="M92,35 L92,85 L80,73 L68,85 L68,35 Z" fill="#EA4335"/>
+</svg> 

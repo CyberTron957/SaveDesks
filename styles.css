@@ -1,0 +1,103 @@
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  margin: 0;
+  padding: 0;
+  background-color: #f5f5f5;
+}
+
+.container {
+  width: 350px;
+  padding: 15px;
+  background-color: white;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.header {
+  text-align: center;
+  margin-bottom: 15px;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 10px;
+}
+
+.header h1 {
+  font-size: 24px;
+  margin: 0;
+  color: #3c4043;
+}
+
+.save-section {
+  margin-bottom: 20px;
+  display: flex;
+  gap: 10px;
+}
+
+#workspace-name {
+  flex-grow: 1;
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+button {
+  background-color: #4285f4;
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.2s;
+}
+
+button:hover {
+  background-color: #3367d6;
+}
+
+.workspaces-section h2 {
+  font-size: 18px;
+  margin-top: 0;
+  margin-bottom: 10px;
+  color: #3c4043;
+}
+
+.workspace-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px;
+  border-radius: 4px;
+  margin-bottom: 8px;
+  background-color: #f8f9fa;
+  border: 1px solid #eee;
+}
+
+.workspace-name {
+  font-weight: 500;
+  margin-right: 10px;
+}
+
+.workspace-info {
+  color: #5f6368;
+  font-size: 12px;
+}
+
+.workspace-actions {
+  display: flex;
+  gap: 5px;
+}
+
+.open-btn {
+  background-color: #4285f4;
+}
+
+.delete-btn {
+  background-color: #ea4335;
+}
+
+.no-workspaces {
+  text-align: center;
+  color: #5f6368;
+  padding: 20px 0;
+  font-style: italic;
+} 

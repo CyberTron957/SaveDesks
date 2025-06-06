@@ -1,0 +1,10 @@
+{
+  "manifest_version": 3,
+  "name": "Save Tabs",
+  "version": "1.0",
+  "description": "Save and restore sets of tabs as named workspaces",
+  "permissions": ["tabs", "storage", "windows"],
+  "action": {
+    "default_popup": "popup.html"
+  }
+} 
