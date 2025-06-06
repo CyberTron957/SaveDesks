@@ -44,6 +44,84 @@ class StorageManager {
   }
   
   /**
+   * Set UI mode preference
+   * @param {string} mode - The UI mode ('basic' or 'advanced')
+   */
+  async setUIMode(mode) {
+    await this.setLocal({ uiMode: mode });
+    
+    // If sync is enabled, also save to sync storage
+    if (this.syncEnabled) {
+      try {
+        await this.setSync({ uiMode: mode });
+      } catch (error) {
+        console.error('Error saving UI mode to sync storage:', error);
+      }
+    }
+  }
+  
+  /**
+   * Get UI mode preference
+   * @returns {string} - The UI mode ('basic' or 'advanced')
+   */
+  async getUIMode() {
+    // Try to get from sync first if sync is enabled
+    if (this.syncEnabled) {
+      try {
+        const syncData = await this.getSync(['uiMode']);
+        if (syncData.uiMode) {
+          return syncData.uiMode;
+        }
+      } catch (error) {
+        console.error('Error getting UI mode from sync:', error);
+      }
+    }
+    
+    // Fallback to local storage
+    const localData = await this.getLocal(['uiMode']);
+    return localData.uiMode || 'basic'; // Default to basic mode
+  }
+  
+  /**
+   * Set theme preference
+   * @param {string} theme - The theme ('light' or 'dark')
+   */
+  async setTheme(theme) {
+    await this.setLocal({ theme: theme });
+
+    // If sync is enabled, also save to sync storage
+    if (this.syncEnabled) {
+      try {
+        await this.setSync({ theme: theme });
+      } catch (error) {
+        console.error('Error saving theme to sync storage:', error);
+      }
+    }
+  }
+
+  /**
+   * Get theme preference
+   * @returns {string} - The theme ('light' or 'dark')
+   */
+  async getTheme() {
+    // Try to get from sync first if sync is enabled
+    if (this.syncEnabled) {
+      try {
+        const syncData = await this.getSync(['theme']);
+        if (syncData.theme) {
+          return syncData.theme;
+        }
+      } catch (error) {
+        console.error('Error getting theme from sync:', error);
+      }
+    }
+
+    // Fallback to local storage
+    const localData = await this.getLocal(['theme']);
+    return localData.theme || 'light'; // Default to light mode
+  }
+  
+  /**
    * Push all local data to sync storage
    */
   async pushLocalToSync() {

@@ -10,55 +10,115 @@ document.addEventListener('DOMContentLoaded', async () => {
   const searchInput = document.getElementById('search-workspaces');
   const clearSearchButton = document.getElementById('clear-search');
   const saveTabsButton = document.getElementById('save-tabs');
-  const updateTabsButton = document.getElementById('update-tabs');
   const workspacesList = document.getElementById('workspaces-list');
   const exportButton = document.getElementById('export-workspaces');
   const importButton = document.getElementById('import-workspaces');
   const importFileInput = document.getElementById('import-file');
   const syncToggle = document.getElementById('sync-toggle');
+  const modeToggle = document.getElementById('mode-toggle');
+  const themeToggle = document.getElementById('theme-toggle');
   
-  // Modal Elements
-  const updateModal = document.getElementById('update-modal');
-  const updateWorkspaceSelect = document.getElementById('update-workspace-select');
-  const confirmUpdateButton = document.getElementById('confirm-update');
-  const cancelUpdateButton = document.getElementById('cancel-update');
-  const closeModalButton = document.querySelector('.close-modal');
+  // Custom Dialog Elements
+  const customDialog = document.getElementById('custom-dialog');
+  const dialogTitle = document.getElementById('dialog-title');
+  const dialogMessage = document.getElementById('dialog-message');
+  const dialogFooter = document.getElementById('dialog-footer');
+  const dialogCloseButton = document.getElementById('dialog-close');
   
   // Search state
   let searchTimeout = null;
   
-  // Initialize sync toggle
+  // Initialize
   await initSyncToggle();
+  await initUIMode();
+  await initTheme();
   
-  // Load categories and workspaces
+  // Load initial data
   loadCategories();
   loadWorkspaces();
   
   // Event listeners
   saveTabsButton.addEventListener('click', saveCurrentTabs);
-  updateTabsButton.addEventListener('click', showUpdateModal);
   exportButton.addEventListener('click', exportWorkspaces);
   importButton.addEventListener('click', () => importFileInput.click());
   importFileInput.addEventListener('change', importWorkspaces);
   addCategoryButton.addEventListener('click', addNewCategory);
   categoryFilterSelect.addEventListener('change', loadWorkspaces);
   syncToggle.addEventListener('change', toggleSync);
+  modeToggle.addEventListener('change', toggleUIMode);
+  themeToggle.addEventListener('change', toggleTheme);
   
-  // Search event listeners
   searchInput.addEventListener('input', debounceSearch);
   clearSearchButton.addEventListener('click', clearSearch);
   
-  // Modal event listeners
-  confirmUpdateButton.addEventListener('click', updateWorkspace);
-  cancelUpdateButton.addEventListener('click', hideUpdateModal);
-  closeModalButton.addEventListener('click', hideUpdateModal);
-  
+  dialogCloseButton.addEventListener('click', () => customDialog.style.display = 'none');
+
   // Close modal when clicking outside
   window.addEventListener('click', (event) => {
-    if (event.target === updateModal) {
-      hideUpdateModal();
+    if (event.target === customDialog) {
+      customDialog.style.display = 'none';
     }
   });
+
+  // Reusable dialog function
+  function showDialog(title, message, buttons) {
+    dialogTitle.textContent = title;
+    dialogMessage.textContent = message;
+    dialogFooter.innerHTML = ''; // Clear previous buttons
+
+    buttons.forEach(button => {
+      const btn = document.createElement('button');
+      btn.textContent = button.text;
+      btn.className = button.class;
+      btn.addEventListener('click', () => {
+        customDialog.style.display = 'none';
+        if (button.onClick) {
+          button.onClick();
+        }
+      });
+      dialogFooter.appendChild(btn);
+    });
+
+    customDialog.style.display = 'block';
+  }
+  
+  // Initialize UI mode from storage
+  async function initUIMode() {
+    try {
+      const uiMode = await storageManager.getUIMode();
+      const isAdvancedMode = uiMode === 'advanced';
+      modeToggle.checked = isAdvancedMode;
+      updateUIMode(isAdvancedMode);
+    } catch (error) {
+      console.error('Error initializing UI mode:', error);
+      modeToggle.checked = false;
+      updateUIMode(false);
+    }
+  }
+  
+  // Toggle between basic and advanced UI modes
+  async function toggleUIMode() {
+    const isAdvancedMode = modeToggle.checked;
+    updateUIMode(isAdvancedMode);
+    
+    // Save mode preference
+    try {
+      await storageManager.setUIMode(isAdvancedMode ? 'advanced' : 'basic');
+    } catch (error) {
+      console.error('Error saving UI mode:', error);
+    }
+  }
+  
+  // Update UI based on selected mode
+  function updateUIMode(isAdvancedMode) {
+    const container = document.querySelector('.container');
+    
+    if (isAdvancedMode) {
+      container.classList.remove('basic-mode');
+    } else {
+      container.classList.add('basic-mode');
+    }
+  }
   
   // Initialize sync toggle state
   async function initSyncToggle() {
@@ -91,17 +151,17 @@ document.addEventListener('DOMContentLoaded', async () => {
         // Show a message to the user
         const result = await storageManager.pushLocalToSync();
         if (!result.success) {
-          alert(`Could not enable sync: ${result.error}`);
+          showDialog('Sync Error', `Could not enable sync: ${result.error}`, [{ text: 'OK', class: 'btn-primary' }]);
           syncToggle.checked = false;
         } else {
-          alert('Sync enabled! Your workspaces will now sync across devices.');
+          showDialog('Sync Enabled', 'Your workspaces will now sync across devices.', [{ text: 'OK', class: 'btn-primary' }]);
         }
       } else {
-        alert('Sync disabled. Your workspaces will no longer sync across devices.');
+        showDialog('Sync Disabled', 'Your workspaces will no longer sync across devices.', [{ text: 'OK', class: 'btn-primary' }]);
       }
     } catch (error) {
       console.error('Error toggling sync:', error);
-      alert('Error toggling sync. Please try again.');
+      showDialog('Error', 'Error toggling sync. Please try again.', [{ text: 'OK', class: 'btn-primary' }]);
       syncToggle.checked = !syncEnabled; // Revert the toggle
     }
   }
@@ -120,107 +180,61 @@ document.addEventListener('DOMContentLoaded', async () => {
     loadWorkspaces();
   }
   
-  // Function to show update modal
-  function showUpdateModal() {
-    // Populate the update select dropdown
-    populateUpdateSelect();
-    
-    // Show the modal
-    updateModal.style.display = 'block';
-  }
-  
-  // Function to hide update modal
-  function hideUpdateModal() {
-    updateModal.style.display = 'none';
-  }
-  
-  // Function to populate the update select dropdown
-  async function populateUpdateSelect() {
-    // Clear existing options except the first one
-    while (updateWorkspaceSelect.options.length > 1) {
-      updateWorkspaceSelect.remove(1);
-    }
-    
-    try {
-      // Get workspaces
-      const workspaces = await storageManager.getWorkspaces();
-      
-      // Sort workspaces by name
-      const sortedNames = Object.keys(workspaces).sort();
-      
-      // Add workspaces to select
-      sortedNames.forEach(name => {
-        const option = document.createElement('option');
-        option.value = name;
-        option.textContent = name;
-        updateWorkspaceSelect.appendChild(option);
-      });
-    } catch (error) {
-      console.error('Error populating update select:', error);
-    }
-  }
-  
   // Function to update an existing workspace
-  async function updateWorkspace() {
-    const workspaceName = updateWorkspaceSelect.value;
-    
-    if (!workspaceName) {
-      alert('Please select a workspace to update.');
-      return;
-    }
-    
-    try {
-      chrome.tabs.query({ currentWindow: true }, async (tabs) => {
-        const tabsData = tabs.map(tab => ({
-          url: tab.url,
-          title: tab.title,
-          favIconUrl: tab.favIconUrl
-        }));
-        
-        // Get existing workspaces
-        const workspaces = await storageManager.getWorkspaces();
-        
-        if (!workspaces[workspaceName]) {
-          alert('Workspace not found.');
-          hideUpdateModal();
-          return;
-        }
-        
-        // Preserve the category
-        const category = workspaces[workspaceName].category || '';
-        
-        // Update the workspace
-        workspaces[workspaceName] = {
-          tabs: tabsData,
-          createdAt: new Date().toISOString(),
-          tabCount: tabsData.length,
-          category: category,
-          updatedAt: new Date().toISOString() // Add updated timestamp
-        };
-        
-        // Save the updated workspaces
-        const result = await storageManager.saveData({ workspaces });
-        
-        if (result.success) {
-          loadWorkspaces();
-          hideUpdateModal();
-          alert(`Workspace "${workspaceName}" has been updated with ${tabsData.length} tabs.`);
-        } else {
-          alert(`Error updating workspace: ${result.error}`);
-          
-          if (result.syncDisabled) {
-            syncToggle.checked = false;
-            alert('Sync has been disabled due to storage limits.');
+  async function updateWorkspace(name) {
+    showDialog('Confirm Update', `Are you sure you want to update "${name}" with your current tabs?`, [
+      {
+        text: 'Update',
+        class: 'update-btn',
+        onClick: async () => {
+          try {
+            chrome.tabs.query({ currentWindow: true }, async (tabs) => {
+              const tabsData = tabs.map(tab => ({
+                url: tab.url,
+                title: tab.title,
+                favIconUrl: tab.favIconUrl
+              }));
+              
+              const workspaces = await storageManager.getWorkspaces();
+              
+              if (!workspaces[name]) {
+                showDialog('Error', 'Workspace not found.', [{ text: 'OK', class: 'btn-primary' }]);
+                return;
+              }
+              
+              const category = workspaces[name].category || '';
+              
+              workspaces[name] = {
+                tabs: tabsData,
+                createdAt: workspaces[name].createdAt, // Preserve original creation date
+                tabCount: tabsData.length,
+                category: category,
+                updatedAt: new Date().toISOString()
+              };
+              
+              const result = await storageManager.saveData({ workspaces });
+              
+              if (result.success) {
+                loadWorkspaces();
+                showDialog('Success', `Workspace "${name}" has been updated.`, [{ text: 'OK', class: 'btn-primary' }]);
+              } else {
+                 showDialog('Error', `Error updating workspace: ${result.error}`, [{ text: 'OK', class: 'btn-primary' }]);
+              }
+            });
+          } catch (error) {
+            console.error('Error updating workspace:', error);
+            showDialog('Error', 'An error occurred while updating the workspace.', [{ text: 'OK', class: 'btn-primary' }]);
           }
         }
-      });
-    } catch (error) {
-      console.error('Error updating workspace:', error);
-      alert('Error updating workspace. Please try again.');
-    }
+      },
+      {
+        text: 'Cancel',
+        class: 'btn-secondary'
+      }
+    ]);
   }
   
-  // Function to load categories
+  // Function to load categories into select dropdowns
   async function loadCategories() {
     try {
       const categories = await storageManager.getCategories();
@@ -337,8 +351,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (result.success) {
           workspaceNameInput.value = '';
           loadWorkspaces();
+          showDialog('Success', `Workspace "${workspaceName}" saved with ${tabs.length} tabs.`, [{ text: 'OK', class: 'btn-primary' }]);
         } else {
-          alert(`Error saving workspace: ${result.error}`);
+          showDialog('Error', `Error saving workspace: ${result.error}`, [{ text: 'OK', class: 'btn-primary' }]);
           
           if (result.syncDisabled) {
             syncToggle.checked = false;
@@ -347,7 +362,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
       } catch (error) {
         console.error('Error saving workspace:', error);
-        alert('Error saving workspace. Please try again.');
+        showDialog('Error', 'Error saving workspace. Please try again.', [{ text: 'OK', class: 'btn-primary' }]);
       }
     });
   }
@@ -484,12 +499,13 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Function to load and display saved workspaces
   async function loadWorkspaces() {
     try {
+      // Clear any existing workspaces from the UI
+      workspacesList.innerHTML = '';
+      
+      // Force refresh from storage
       const workspaces = await storageManager.getWorkspaces();
       const selectedCategory = categoryFilterSelect.value;
       const searchQuery = searchInput.value.trim().toLowerCase();
-      
-      // Clear the workspaces list
-      workspacesList.innerHTML = '';
       
       if (Object.keys(workspaces).length === 0) {
         workspacesList.innerHTML = '<div class="no-workspaces">No saved workspaces yet.</div>';
@@ -573,13 +589,15 @@ document.addEventListener('DOMContentLoaded', async () => {
           
           // Render workspaces in this category
           workspaces.forEach(([name, data]) => {
-            renderWorkspaceItem(name, data, searchQuery);
+            const workspaceItem = renderWorkspaceItem(name, data, searchQuery);
+            workspacesList.appendChild(workspaceItem);
           });
         });
       } else {
         // For specific category view or search results, just render the workspaces without headers
         sortedWorkspaces.forEach(([name, data]) => {
-          renderWorkspaceItem(name, data, searchQuery);
+          const workspaceItem = renderWorkspaceItem(name, data, searchQuery);
+          workspacesList.appendChild(workspaceItem);
         });
       }
     } catch (error) {
@@ -590,88 +608,62 @@ document.addEventListener('DOMContentLoaded', async () => {
   
   // Function to render a workspace item
   function renderWorkspaceItem(name, data, searchQuery = '') {
-    const workspaceItem = document.createElement('div');
-    workspaceItem.className = 'workspace-item';
+    const item = document.createElement('div');
+    item.className = 'workspace-item';
     
-    // Highlight if it matches the search query
-    if (searchQuery && 
-        (name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-         (data.category && data.category.toLowerCase().includes(searchQuery.toLowerCase())) ||
-         data.tabs.some(tab => 
-           tab.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
-           tab.url.toLowerCase().includes(searchQuery.toLowerCase())
-         ))) {
-      workspaceItem.classList.add('highlight');
+    let highlightedName = name;
+    if (searchQuery) {
+      const regex = new RegExp(searchQuery, 'gi');
+      highlightedName = highlightedName.replace(regex, (match) => `<span class="highlight-text">${match}</span>`);
     }
-    
-    const workspaceInfo = document.createElement('div');
-    
-    // Add category badge if it exists and we're in "All Categories" view
-    let categoryHtml = '';
-    if (data.category && categoryFilterSelect.value === 'all') {
-      categoryHtml = `<span class="category-badge">${data.category}</span>`;
-    }
-    
-    // Add updated indicator if the workspace has been updated
-    let updatedHtml = '';
-    if (data.updatedAt) {
-      updatedHtml = '<span class="update-indicator">(Updated)</span>';
-    }
-    
-    // Format the name and highlight the search term if it's in the name
-    let displayName = name;
-    if (searchQuery && name.toLowerCase().includes(searchQuery.toLowerCase())) {
-      const regex = new RegExp(`(${searchQuery})`, 'gi');
-      displayName = name.replace(regex, '<span class="highlight-text">$1</span>');
-    }
-    
-    workspaceInfo.innerHTML = `
-      <div class="workspace-name">${displayName} ${updatedHtml}</div>
-      <div class="workspace-info">
-        ${categoryHtml}
-        ${data.tabCount} tabs · ${formatDate(data.createdAt || data.updatedAt)}
+
+    item.innerHTML = `
+      <div>
+        <span class="workspace-name">${highlightedName}</span>
+        <div class="workspace-info">
+          <span class="tab-count">${data.tabCount} tabs</span> |
+          <span class="date">Saved on ${formatDate(data.createdAt)}</span>
+          ${data.category ? `<span class="category-badge">${data.category}</span>` : ''}
+          ${data.updatedAt ? `<span class="update-indicator">Updated on ${formatDate(data.updatedAt)}</span>` : ''}
+        </div>
+      </div>
+      <div class="workspace-actions">
+        <button class="open-btn" title="Open Workspace"><i class="bi bi-folder2-open"></i></button>
+        <button class="update-btn" title="Update Workspace"><i class="bi bi-arrow-clockwise"></i></button>
+        <button class="preview-btn" title="Preview Tabs"><i class="bi bi-eye"></i></button>
+        <button class="export-btn advanced-feature" title="Export Workspace"><i class="bi bi-download"></i></button>
+        <button class="delete-btn" title="Delete Workspace"><i class="bi bi-trash"></i></button>
       </div>
     `;
-    
-    const workspaceActions = document.createElement('div');
-    workspaceActions.className = 'workspace-actions';
-    
-    const previewButton = document.createElement('button');
-    previewButton.className = 'preview-btn';
-    previewButton.textContent = 'Preview';
-    previewButton.title = 'Preview tabs in this workspace';
-    previewButton.addEventListener('click', () => previewWorkspace(name, data));
-    
-    const openButton = document.createElement('button');
-    openButton.className = 'open-btn';
-    openButton.textContent = 'Open';
-    openButton.title = 'Open all tabs in a new window';
-    openButton.addEventListener('click', () => openWorkspace(name, data));
-    
-    const deleteButton = document.createElement('button');
-    deleteButton.className = 'delete-btn';
-    deleteButton.textContent = 'Delete';
-    deleteButton.title = 'Delete this workspace';
-    deleteButton.addEventListener('click', () => deleteWorkspace(name));
-    
-    workspaceActions.appendChild(previewButton);
-    workspaceActions.appendChild(openButton);
-    workspaceActions.appendChild(deleteButton);
-    
-    workspaceItem.appendChild(workspaceInfo);
-    workspaceItem.appendChild(workspaceActions);
-    
-    // Create a preview section that will be shown when the preview button is clicked
-    const previewSection = document.createElement('div');
-    previewSection.className = 'workspace-preview';
-    previewSection.style.display = 'none';
-    
-    workspaceItem.appendChild(previewSection);
-    
-    workspacesList.appendChild(workspaceItem);
+
+    // Event listeners for workspace actions
+    item.querySelector('.open-btn').addEventListener('click', (e) => {
+        e.stopPropagation();
+        openWorkspace(name, data);
+    });
+    item.querySelector('.update-btn').addEventListener('click', (e) => {
+        e.stopPropagation();
+        updateWorkspace(name);
+    });
+    item.querySelector('.delete-btn').addEventListener('click', (e) => {
+        e.stopPropagation();
+        deleteWorkspace(name);
+    });
+    item.querySelector('.preview-btn').addEventListener('click', (e) => {
+      e.stopPropagation();
+      previewWorkspace(name, data, item);
+    });
+    item.querySelector('.export-btn').addEventListener('click', (e) => {
+        e.stopPropagation();
+        exportSingleWorkspace(name, data);
+    });
+
+    item.addEventListener('click', () => openWorkspace(name, data));
+
+    return item;
   }
   
-  // Function to open a workspace
+  // Function to open all tabs in a workspace
   function openWorkspace(name, data) {
     // Confirm before opening multiple tabs
     if (!confirm(`Open all ${data.tabCount} tabs from "${name}"?`)) {
@@ -701,126 +693,170 @@ document.addEventListener('DOMContentLoaded', async () => {
   
   // Function to delete a workspace
   async function deleteWorkspace(name) {
-    if (!confirm(`Are you sure you want to delete the workspace "${name}"?`)) {
+    showDialog('Confirm Deletion', `Are you sure you want to delete "${name}"? This action cannot be undone.`, [
+      {
+        text: 'Delete',
+        class: 'delete-btn',
+        onClick: async () => {
+          try {
+            const workspaces = await storageManager.getWorkspaces();
+            
+            if (!workspaces[name]) {
+              showDialog('Error', 'Workspace not found.', [{ text: 'OK', class: 'btn-primary' }]);
+              return;
+            }
+            
+            // Create a deep copy of workspaces without the one to be deleted
+            const updatedWorkspaces = {};
+            for (const [wsName, wsData] of Object.entries(workspaces)) {
+              if (wsName !== name) {
+                updatedWorkspaces[wsName] = wsData;
+              }
+            }
+            
+            // Replace entire workspaces object
+            await storageManager.setLocal({ workspaces: updatedWorkspaces });
+            
+            // Also update sync storage if enabled
+            if (storageManager.getSyncStatus()) {
+              await storageManager.setSync({ workspaces: updatedWorkspaces });
+            }
+            
+            // Refresh the UI
+            await loadWorkspaces();
+            
+            showDialog('Success', `Workspace "${name}" has been deleted.`, [{ text: 'OK', class: 'btn-primary' }]);
+          } catch (error) {
+            console.error('Error deleting workspace:', error);
+            showDialog('Error', 'An error occurred while deleting the workspace.', [{ text: 'OK', class: 'btn-primary' }]);
+          }
+        }
+      },
+      {
+        text: 'Cancel',
+        class: 'btn-secondary'
+      }
+    ]);
+  }
+  
+  // Function to format a date string
+  function formatDate(dateString) {
+    if (!dateString) return 'N/A';
+    const date = new Date(dateString);
+    return date.toLocaleDateString();
+  }
+
+  // Function to preview tabs in a workspace
+  function previewWorkspace(name, data, workspaceItem) {
+    const nextElement = workspaceItem.nextElementSibling;
+
+    // If the next element is a preview, it means we're toggling the same item's preview off.
+    if (nextElement && nextElement.classList.contains('workspace-preview-container')) {
+      nextElement.remove();
       return;
     }
-    
-    try {
-      // Get existing workspaces
-      const workspaces = await storageManager.getWorkspaces();
-      
-      if (workspaces[name]) {
-        delete workspaces[name];
-        
-        // Save the updated workspaces
-        await storageManager.saveData({ workspaces });
-        loadWorkspaces();
-      }
-    } catch (error) {
-      console.error('Error deleting workspace:', error);
-      alert('Error deleting workspace. Please try again.');
+
+    // If another preview is open somewhere else, close it.
+    const anyOpenPreview = document.querySelector('.workspace-preview-container');
+    if (anyOpenPreview) {
+      anyOpenPreview.remove();
     }
+
+    const previewContainer = document.createElement('div');
+    previewContainer.className = 'workspace-preview-container';
+
+    let tabsHtml = data.tabs.slice(0, 10).map(tab => `
+      <div class="tab-item">
+        <img src="${tab.favIconUrl || 'images/icon16.png'}" class="tab-favicon" alt="">
+        <div class="tab-info">
+          <div class="tab-title">${tab.title || 'No Title'}</div>
+          <div class="tab-url">${truncateUrl(tab.url)}</div>
+        </div>
+      </div>
+    `).join('');
+
+    if (data.tabs.length > 10) {
+      tabsHtml += `<div class="more-tabs-note">... and ${data.tabs.length - 10} more tabs</div>`;
+    }
+
+    previewContainer.innerHTML = `
+      <div class="workspace-preview">
+        <div class="preview-header">Previewing "${name}"</div>
+        <div class="tabs-list">${tabsHtml}</div>
+      </div>
+    `;
+    
+    // Insert the preview container *after* the workspace item.
+    workspaceItem.after(previewContainer);
   }
   
-  // Helper function to format date
-  function formatDate(dateString) {
-    const date = new Date(dateString);
-    const now = new Date();
-    
-    // If today, show time
-    if (date.toDateString() === now.toDateString()) {
-      return `Today at ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
-    }
-    
-    // If yesterday
-    const yesterday = new Date(now);
-    yesterday.setDate(now.getDate() - 1);
-    if (date.toDateString() === yesterday.toDateString()) {
-      return 'Yesterday';
-    }
-    
-    // Otherwise show date
-    return date.toLocaleDateString([], { month: 'short', day: 'numeric' });
-  }
-  
-  // Function to preview a workspace
-  function previewWorkspace(name, data) {
-    // Find the workspace item and its preview section
-    const workspaceItems = document.querySelectorAll('.workspace-item');
-    let previewSection = null;
-    
-    for (const item of workspaceItems) {
-      const nameElement = item.querySelector('.workspace-name');
-      if (nameElement && nameElement.textContent.includes(name)) {
-        previewSection = item.querySelector('.workspace-preview');
-        break;
-      }
-    }
-    
-    if (!previewSection) return;
-    
-    // Toggle the preview section
-    if (previewSection.style.display === 'none') {
-      // Hide all other previews first
-      document.querySelectorAll('.workspace-preview').forEach(preview => {
-        preview.style.display = 'none';
-      });
-      
-      // Show this preview
-      previewSection.style.display = 'block';
-      
-      // Populate the preview
-      previewSection.innerHTML = '';
-      
-      const previewHeader = document.createElement('div');
-      previewHeader.className = 'preview-header';
-      previewHeader.textContent = 'Tabs in this workspace:';
-      previewSection.appendChild(previewHeader);
-      
-      const tabsList = document.createElement('div');
-      tabsList.className = 'tabs-list';
-      
-      // Add tabs to the preview list (limited to first 10 for performance)
-      const tabsToShow = data.tabs.slice(0, 10);
-      tabsToShow.forEach((tab, index) => {
-        const tabItem = document.createElement('div');
-        tabItem.className = 'tab-item';
-        
-        const favicon = tab.favIconUrl || 'images/icon16.png';
-        
-        tabItem.innerHTML = `
-          <img src="${favicon}" alt="" class="tab-favicon" onerror="this.src='images/icon16.png'">
-          <div class="tab-info">
-            <div class="tab-title">${tab.title}</div>
-            <div class="tab-url">${truncateUrl(tab.url)}</div>
-          </div>
-        `;
-        
-        tabsList.appendChild(tabItem);
-      });
-      
-      // If there are more tabs than we're showing, add a note
-      if (data.tabs.length > 10) {
-        const moreTabsNote = document.createElement('div');
-        moreTabsNote.className = 'more-tabs-note';
-        moreTabsNote.textContent = `...and ${data.tabs.length - 10} more tabs`;
-        tabsList.appendChild(moreTabsNote);
-      }
-      
-      previewSection.appendChild(tabsList);
-    } else {
-      // Hide the preview
-      previewSection.style.display = 'none';
-    }
-  }
-  
-  // Helper function to truncate URL for display
+  // Function to truncate a URL for display
   function truncateUrl(url) {
     try {
       const urlObj = new URL(url);
       return urlObj.hostname + (urlObj.pathname === '/' ? '' : '...');
     } catch (e) {
       return url.substring(0, 30) + (url.length > 30 ? '...' : '');
+    }
+  }
+  
+  // Export a single workspace
+  async function exportSingleWorkspace(name, data) {
+    try {
+      const workspaceObj = {};
+      workspaceObj[name] = data;
+      
+      const blob = new Blob([JSON.stringify(workspaceObj, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      
+      const date = new Date();
+      const filename = `${name.replace(/[^a-z0-9]/gi, '_')}_${formatDateForFilename(date)}.json`;
+      
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      a.click();
+      
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Error exporting workspace:', error);
+      alert('Error exporting workspace. Please try again.');
+    }
+  }
+
+  // Initialize Theme from storage
+  async function initTheme() {
+    try {
+      const theme = await storageManager.getTheme();
+      const isDarkMode = theme === 'dark';
+      themeToggle.checked = isDarkMode;
+      updateTheme(isDarkMode);
+    } catch (error) {
+      console.error('Error initializing theme:', error);
+      themeToggle.checked = false;
+      updateTheme(false);
+    }
+  }
+
+  // Toggle between light and dark themes
+  async function toggleTheme() {
+    const isDarkMode = themeToggle.checked;
+    updateTheme(isDarkMode);
+
+    // Save theme preference
+    try {
+      await storageManager.setTheme(isDarkMode ? 'dark' : 'light');
+    } catch (error) {
+      console.error('Error saving theme:', error);
+    }
+  }
+
+  // Update UI based on selected theme
+  function updateTheme(isDarkMode) {
+    if (isDarkMode) {
+      document.body.classList.add('dark-mode');
+    } else {
+      document.body.classList.remove('dark-mode');
     }
   }
 }); 

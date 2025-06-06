@@ -4,17 +4,34 @@
   <title>Save Tabs</title>
   <meta charset="utf-8">
   <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 </head>
 <body>
   <div class="container">
     <div class="header">
       <h1>Save Tabs</h1>
-      <div class="sync-container">
-        <label class="sync-toggle">
-          <input type="checkbox" id="sync-toggle">
-          <span class="slider"></span>
-        </label>
-        <span class="sync-label">Sync</span>
+      <div class="header-controls">
+        <div class="theme-container">
+          <label class="theme-toggle">
+            <input type="checkbox" id="theme-toggle">
+            <span class="slider"></span>
+          </label>
+          <span class="theme-label">Dark</span>
+        </div>
+        <div class="mode-container">
+          <label class="mode-toggle">
+            <input type="checkbox" id="mode-toggle">
+            <span class="slider"></span>
+          </label>
+          <span class="mode-label">Advanced</span>
+        </div>
+        <div class="sync-container">
+          <label class="sync-toggle">
+            <input type="checkbox" id="sync-toggle">
+            <span class="slider"></span>
+          </label>
+          <span class="sync-label">Sync</span>
+        </div>
       </div>
     </div>
     
@@ -25,25 +42,24 @@
           <select id="workspace-category">
             <option value="">No Category</option>
           </select>
-          <button id="add-category" title="Add New Category">+</button>
+          <button id="add-category" title="Add New Category"><i class="bi bi-plus-lg"></i></button>
         </div>
       </div>
       <div class="save-buttons">
         <button id="save-tabs">Save New</button>
-        <button id="update-tabs">Update Existing</button>
       </div>
     </div>
     
-    <div class="actions-section">
+    <div class="actions-section advanced-feature">
       <button id="export-workspaces">Export All</button>
       <button id="import-workspaces">Import</button>
       <input type="file" id="import-file" accept=".json" style="display: none;">
     </div>
     
     <div class="filter-section">
-      <div class="search-container">
+      <div class="search-container advanced-feature">
         <input type="text" id="search-workspaces" placeholder="Search workspaces...">
-        <button id="clear-search" title="Clear Search">&times;</button>
+        <button id="clear-search" title="Clear Search"><i class="bi bi-x-lg"></i></button>
       </div>
       <select id="category-filter">
         <option value="all">All Categories</option>
@@ -56,7 +72,7 @@
       <div id="workspaces-list"></div>
     </div>
     
-    <div class="shortcuts-section">
+    <div class="shortcuts-section advanced-feature">
       <h3>Keyboard Shortcuts</h3>
       <div class="shortcut-item">
         <span class="shortcut-key">Ctrl+Shift+S</span>
@@ -71,23 +87,19 @@
       </div>
     </div>
   </div>
-  
-  <!-- Update Workspace Modal -->
-  <div id="update-modal" class="modal">
+
+  <!-- Custom Dialog Modal -->
+  <div id="custom-dialog" class="modal">
     <div class="modal-content">
       <div class="modal-header">
-        <h2>Update Workspace</h2>
-        <span class="close-modal">&times;</span>
+        <h2 id="dialog-title"></h2>
+        <span class="close-modal" id="dialog-close">&times;</span>
       </div>
       <div class="modal-body">
-        <p>Select a workspace to update with the current tabs:</p>
-        <select id="update-workspace-select">
-          <option value="">Select a workspace</option>
-        </select>
+        <p id="dialog-message"></p>
       </div>
-      <div class="modal-footer">
-        <button id="confirm-update">Update</button>
-        <button id="cancel-update">Cancel</button>
+      <div class="modal-footer" id="dialog-footer">
+        <!-- Buttons will be injected here -->
       </div>
     </div>
   </div>
