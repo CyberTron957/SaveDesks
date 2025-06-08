@@ -1,6 +1,28 @@
 // Import the storage manager
 import storageManager from './storage-manager.js';
 
+// Security helper function to sanitize strings
+function sanitizeString(str) {
+  if (!str) return '';
+  
+  // Create a temporary element
+  const tempElement = document.createElement('div');
+  // Set the string as text content (which escapes HTML)
+  tempElement.textContent = str;
+  // Return the escaped HTML
+  return tempElement.innerHTML;
+}
+
+// Validate URL
+function validateUrl(url) {
+  try {
+    const parsedUrl = new URL(url);
+    return (parsedUrl.protocol === 'http:' || parsedUrl.protocol === 'https:') ? url : 'about:blank';
+  } catch (e) {
+    return 'about:blank';
+  }
+}
+
 // Listen for keyboard commands
 chrome.commands.onCommand.addListener((command) => {
   if (command === 'save-current-tabs') {
@@ -46,10 +68,28 @@ function promptToSaveTabs() {
 
 // Listen for messages from the save dialog
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+  // Validate that request is an object
+  if (!request || typeof request !== 'object') {
+    sendResponse({ success: false, error: 'Invalid request format' });
+    return true;
+  }
+  
   if (request.action === 'saveTabs') {
+    // Validate required fields
+    if (!request.workspaceName || !request.tabsData) {
+      sendResponse({ success: false, error: 'Missing required data' });
+      return true;
+    }
+    
     const workspaceName = request.workspaceName;
     const category = request.category || '';
     const tabsData = request.tabsData;
+    
+    // Validate data types
+    if (typeof workspaceName !== 'string' || typeof category !== 'string' || !Array.isArray(tabsData)) {
+      sendResponse({ success: false, error: 'Invalid data format' });
+      return true;
+    }
     
     // Save the workspace
     saveWorkspace(workspaceName, category, tabsData)
@@ -99,15 +139,47 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 // Function to save a workspace
 async function saveWorkspace(name, category, tabsData) {
   try {
+    // Validate inputs
+    if (!name || typeof name !== 'string') {
+      throw new Error('Invalid workspace name');
+    }
+    
+    if (typeof category !== 'string') {
+      category = '';
+    }
+    
+    if (!Array.isArray(tabsData)) {
+      throw new Error('Invalid tabs data');
+    }
+    
+    // Sanitize inputs
+    const sanitizedName = sanitizeString(name);
+    const sanitizedCategory = sanitizeString(category);
+    
+    // Sanitize and validate each tab
+    const sanitizedTabs = tabsData.map(tab => {
+      if (!tab || typeof tab !== 'object') {
+        return { url: 'about:blank', title: 'Invalid Tab', favIconUrl: '' };
+      }
+      
+      return {
+        url: validateUrl(tab.url),
+        title: sanitizeString(tab.title || ''),
+        favIconUrl: tab.favIconUrl && typeof tab.favIconUrl === 'string' && 
+                   (tab.favIconUrl.startsWith('http:') || tab.favIconUrl.startsWith('https:')) 
+                   ? tab.favIconUrl : ''
+      };
+    });
+    
     // Get existing workspaces
     const workspaces = await storageManager.getWorkspaces();
     
     // Add the new workspace
-    workspaces[name] = {
-      tabs: tabsData,
+    workspaces[sanitizedName] = {
+      tabs: sanitizedTabs,
       createdAt: new Date().toISOString(),
-      tabCount: tabsData.length,
-      category: category
+      tabCount: sanitizedTabs.length,
+      category: sanitizedCategory
     };
     
     // Save to storage

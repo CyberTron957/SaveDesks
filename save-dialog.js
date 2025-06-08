@@ -1,6 +1,18 @@
 // Import the storage manager
 import storageManager from './storage-manager.js';
 
+// Security helper function to sanitize strings
+function sanitizeString(str) {
+  if (!str) return '';
+  
+  // Create a temporary element
+  const tempElement = document.createElement('div');
+  // Set the string as text content (which escapes HTML)
+  tempElement.textContent = str;
+  // Return the escaped HTML
+  return tempElement.innerHTML;
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
   // Elements
   const workspaceNameInput = document.getElementById('workspace-name');
@@ -9,6 +21,13 @@ document.addEventListener('DOMContentLoaded', async () => {
   const saveButton = document.getElementById('save-button');
   const cancelButton = document.getElementById('cancel-button');
   const syncToggle = document.getElementById('sync-toggle');
+  
+  // Custom Dialog Elements
+  const customDialog = document.getElementById('custom-dialog');
+  const dialogTitle = document.getElementById('dialog-title');
+  const dialogMessage = document.getElementById('dialog-message');
+  const dialogFooter = document.getElementById('dialog-footer');
+  const dialogCloseButton = document.getElementById('dialog-close');
   
   // Storage for tabs data
   let tabsData = null;
@@ -21,6 +40,14 @@ document.addEventListener('DOMContentLoaded', async () => {
   saveButton.addEventListener('click', saveWorkspace);
   cancelButton.addEventListener('click', closeDialog);
   syncToggle.addEventListener('change', toggleSync);
+  dialogCloseButton.addEventListener('click', () => customDialog.style.display = 'none');
+  
+  // Close modal when clicking outside
+  window.addEventListener('click', (event) => {
+    if (event.target === customDialog) {
+      customDialog.style.display = 'none';
+    }
+  });
   
   // Enter key to save
   workspaceNameInput.addEventListener('keyup', (e) => {
@@ -28,6 +55,28 @@ document.addEventListener('DOMContentLoaded', async () => {
       saveWorkspace();
     }
   });
+  
+  // Reusable dialog function
+  function showDialog(title, message, buttons) {
+    dialogTitle.textContent = title;
+    dialogMessage.textContent = message;
+    dialogFooter.innerHTML = ''; // Clear previous buttons
+
+    buttons.forEach(button => {
+      const btn = document.createElement('button');
+      btn.textContent = button.text;
+      btn.className = button.class;
+      btn.addEventListener('click', () => {
+        customDialog.style.display = 'none';
+        if (button.onClick) {
+          button.onClick();
+        }
+      });
+      dialogFooter.appendChild(btn);
+    });
+
+    customDialog.style.display = 'block';
+  }
   
   // Function to initialize the dialog
   async function initializeDialog() {
@@ -110,21 +159,46 @@ document.addEventListener('DOMContentLoaded', async () => {
     const category = workspaceCategorySelect.value;
     
     if (!workspaceName) {
-      alert('Please enter a workspace name.');
+      showDialog('Error', 'Please enter a workspace name.', [{ text: 'OK', class: 'btn-primary' }]);
       return;
     }
     
     if (!tabsData) {
-      alert('No tabs data available.');
+      showDialog('Error', 'No tabs data available.', [{ text: 'OK', class: 'btn-primary' }]);
       return;
     }
+    
+    // Sanitize user input
+    const sanitizedName = sanitizeString(workspaceName);
+    const sanitizedCategory = sanitizeString(category);
+    
+    // Sanitize and validate tabs data
+    const sanitizedTabs = tabsData.map(tab => {
+      // Validate URL
+      let validUrl = tab.url;
+      try {
+        const url = new URL(tab.url);
+        // Only allow http and https protocols
+        if (url.protocol !== 'http:' && url.protocol !== 'https:') {
+          validUrl = 'about:blank';
+        }
+      } catch (e) {
+        validUrl = 'about:blank';
+      }
+      
+      return {
+        url: validUrl,
+        title: sanitizeString(tab.title || ''),
+        favIconUrl: tab.favIconUrl && tab.favIconUrl.startsWith('http') ? tab.favIconUrl : ''
+      };
+    });
     
     // Send a message to the background script to save the workspace
     chrome.runtime.sendMessage({
       action: 'saveTabs',
-      workspaceName: workspaceName,
-      category: category,
-      tabsData: tabsData
+      workspaceName: sanitizedName,
+      category: sanitizedCategory,
+      tabsData: sanitizedTabs
     }, (response) => {
       if (response && response.success) {
         // Close the dialog
@@ -139,11 +213,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
       } else {
         const errorMessage = response && response.error ? response.error : 'Failed to save workspace.';
-        alert(errorMessage);
+        showDialog('Error', errorMessage, [{ text: 'OK', class: 'btn-primary' }]);
         
         if (response && response.syncDisabled) {
           syncToggle.checked = false;
-          alert('Sync has been disabled due to storage limits.');
+          showDialog('Sync Disabled', 'Sync has been disabled due to storage limits.', [{ text: 'OK', class: 'btn-primary' }]);
         }
       }
     });

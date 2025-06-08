@@ -6,7 +6,7 @@
   --bg-color: #f4f7f9;
   --fg-color: #1a1b1e;
   --container-bg: #ffffff;
-  --container-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+  --container-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
   --header-border: #e9ecef;
   --text-color: #343a40;
   --text-color-muted: #6c757d;
@@ -41,7 +41,7 @@ body.dark-mode {
   --bg-color: #1a1b1e;
   --fg-color: #f4f7f9;
   --container-bg: #2a2b2e;
-  --container-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  --container-shadow: 0 8px 30px rgba(0, 0, 0, 0.25);
   --header-border: #3a3b3e;
   --text-color: #f8f9fa;
   --text-color-muted: #adb5bd;
@@ -74,18 +74,23 @@ body {
   background-color: var(--bg-color);
   color: var(--text-color);
   transition: background-color 0.3s, color 0.3s;
+  font-size: 15px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 .container {
-  width: 380px;
-  padding: 20px;
+  width: 400px;
+  padding: 24px;
   background-color: var(--container-bg);
   box-shadow: var(--container-shadow);
   transition: all 0.3s ease;
+  border-radius: 12px;
 }
 
 .header {
-  text-align: center;
+  text-align: left;
   margin-bottom: 20px;
   border-bottom: 1px solid var(--header-border);
   padding-bottom: 15px;
@@ -95,10 +100,11 @@ body {
 }
 
 .header h1 {
-  font-size: 26px;
+  font-size: 20px;
   margin: 0;
   color: var(--text-color);
   font-weight: 600;
+  letter-spacing: -0.5px;
 }
 
 .header-controls {
@@ -152,6 +158,7 @@ body {
   background-color: var(--toggle-slider);
   transition: .4s;
   border-radius: 50%;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 input:checked + .slider {
@@ -179,7 +186,7 @@ input:checked + .slider:before {
 }
 
 .save-section, .filter-section, .actions-section {
-  margin-bottom: 20px;
+  margin-bottom: 24px;
 }
 
 .input-group, .save-section, .filter-section {
@@ -188,45 +195,50 @@ input:checked + .slider:before {
   gap: 12px;
 }
 
-#workspace-name, #search-workspaces, #workspace-category, #category-filter {
+#workspace-name, #search-workspaces, #workspace-category, #category-filter, #dialog-input {
   width: 100%;
-  padding: 10px 14px;
+  padding: 12px 16px;
   border: 1px solid var(--input-border);
-  border-radius: 6px;
-  font-size: 14px;
+  border-radius: 8px;
+  font-size: 15px;
   background-color: var(--input-bg);
   color: var(--text-color);
   box-sizing: border-box;
-  transition: border-color 0.2s, box-shadow 0.2s;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
 }
 
-#workspace-name:focus, #search-workspaces:focus, #workspace-category:focus, #category-filter:focus {
+#workspace-name:focus, #search-workspaces:focus, #workspace-category:focus, #category-filter:focus, #dialog-input:focus {
   outline: none;
   border-color: var(--input-focus-border);
-  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.15);
+  transform: translateY(-1px);
 }
 
 button {
   border: none;
-  padding: 10px 15px;
-  border-radius: 6px;
+  padding: 10px 16px;
+  border-radius: 8px;
   cursor: pointer;
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 500;
-  transition: background-color 0.2s, transform 0.1s;
+  transition: all 0.2s ease;
   color: white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
 button:hover {
-  transform: translateY(-1px);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
 button:active {
   transform: translateY(0);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
 /* Primary buttons */
-#save-tabs, .open-btn, #confirm-update {
+#save-tabs, .open-btn, #confirm-update, .btn-primary {
   background-color: var(--primary-color);
   color: white;
 }
@@ -255,11 +267,11 @@ button:active {
   color: white;
 }
 
-#save-tabs:hover, .open-btn:hover, #confirm-update:hover {
+#save-tabs:hover, .open-btn:hover, #confirm-update:hover, .btn-primary:hover {
   background-color: var(--primary-color-hover);
 }
 
-#update-tabs:hover, #import-workspaces:hover {
+#update-tabs:hover, #import-workspaces:hover, .update-btn:hover {
   background-color: var(--warning-color-hover);
 }
 
@@ -267,17 +279,17 @@ button:active {
   background-color: var(--danger-color-hover);
 }
 
-#add-category:hover, #export-all:hover, .preview-btn:hover {
+#add-category:hover, #export-all:hover, .preview-btn:hover, .export-btn:hover {
   background-color: var(--success-color-hover);
 }
 
-#cancel-update:hover {
+#cancel-update:hover, .btn-secondary:hover {
   background-color: var(--secondary-color-hover);
 }
 
 .save-buttons, .actions-section {
   display: flex;
-  gap: 10px;
+  gap: 12px;
 }
 
 .save-buttons button, .actions-section button {
@@ -286,13 +298,16 @@ button:active {
 
 .category-select-container {
   display: flex;
-  gap: 8px;
+  gap: 10px;
 }
 
 #add-category {
-  padding: 10px 14px;
+  padding: 12px;
   font-size: 16px;
   line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .search-container {
@@ -301,64 +316,75 @@ button:active {
 }
 
 #search-workspaces {
-  padding-right: 35px;
+  padding-right: 40px;
 }
 
 #clear-search {
   position: absolute;
-  right: 1px;
-  top: 1px;
-  bottom: 1px;
+  right: 2px;
+  top: 2px;
+  bottom: 2px;
   background: none;
   border: none;
   color: var(--text-color-muted);
   font-size: 16px;
   cursor: pointer;
-  padding: 0 12px;
-  border-radius: 0 6px 6px 0;
+  padding: 0 14px;
+  border-radius: 0 8px 8px 0;
+  box-shadow: none;
 }
+
 #clear-search:hover {
   color: var(--danger-color);
+  background-color: rgba(0, 0, 0, 0.05);
+  transform: none;
+  box-shadow: none;
 }
 
 .category-badge {
   display: inline-block;
-  padding: 4px 10px;
+  padding: 4px 12px;
   font-size: 12px;
   font-weight: 600;
-  border-radius: 12px;
-  margin-right: 5px;
+  border-radius: 20px;
+  margin-right: 8px;
   background-color: var(--badge-bg);
   color: var(--badge-color);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  letter-spacing: 0.2px;
 }
 
 .workspaces-section h2, .shortcuts-section h3, .modal-header h2 {
-  font-size: 18px;
+  font-size: 20px;
   margin-top: 0;
-  margin-bottom: 15px;
+  margin-bottom: 20px;
   color: var(--text-color);
   font-weight: 600;
+  letter-spacing: -0.5px;
 }
 
 .workspace-list {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 12px;
 }
 
 .workspace-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 12px 15px;
-  border-radius: 6px;
+  padding: 16px;
+  border-radius: 10px;
   background-color: var(--item-bg);
   border: 1px solid var(--item-border);
-  transition: background-color 0.2s, border-color 0.2s;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.03);
 }
 
 .workspace-item:hover {
   background-color: var(--bg-color);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.06);
 }
 
 .highlight {
@@ -369,12 +395,15 @@ button:active {
 .workspace-name {
   font-weight: 600;
   margin-right: 10px;
-  font-size: 15px;
+  font-size: 16px;
+  letter-spacing: -0.3px;
 }
 
 .workspace-info {
   color: var(--text-color-muted);
-  font-size: 12px;
+  font-size: 13px;
+  margin-top: 5px;
+  letter-spacing: 0.1px;
 }
 
 .workspace-actions {
@@ -382,30 +411,40 @@ button:active {
   gap: 8px;
 }
 
-.open-btn, .delete-btn, .preview-btn {
-  font-size: 12px;
-  padding: 6px 10px;
+.workspace-actions button {
+  font-size: 13px;
+  padding: 8px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 8px;
+}
+
+.workspace-actions button i {
+  font-size: 17px;
 }
 
 .no-workspaces {
   text-align: center;
   color: var(--text-color-muted);
-  padding: 25px 0;
+  padding: 30px 0;
   font-style: italic;
   background-color: var(--item-bg);
-  border-radius: 6px;
+  border-radius: 10px;
+  border: 1px dashed var(--item-border);
+  margin-top: 10px;
 }
 
 .category-header {
   font-weight: 600;
   color: var(--text-color);
-  margin: 20px 0 10px;
-  padding-bottom: 8px;
+  margin: 24px 0 12px;
+  padding-bottom: 10px;
   border-bottom: 1px solid var(--header-border);
-  font-size: 16px;
+  font-size: 17px;
+  letter-spacing: -0.3px;
 }
 
 .update-indicator {
@@ -423,7 +462,7 @@ button:active {
 }
 
 .shortcuts-section {
-  margin-top: 25px;
+  margin-top: 30px;
   padding-top: 20px;
   border-top: 1px solid var(--header-border);
 }
@@ -432,17 +471,18 @@ button:active {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 10px;
+  margin-bottom: 12px;
 }
 
 .shortcut-key {
   font-family: monospace;
   background-color: var(--badge-bg);
   color: var(--badge-color);
-  padding: 3px 7px;
-  border-radius: 4px;
-  font-size: 13px;
+  padding: 5px 10px;
+  border-radius: 6px;
+  font-size: 14px;
   border: 1px solid var(--item-border);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
 .shortcut-desc {
@@ -451,49 +491,79 @@ button:active {
 }
 
 .shortcut-note {
-  font-size: 12px;
+  font-size: 13px;
   color: var(--text-color-muted);
   margin-top: 15px;
   font-style: italic;
 }
 
 .workspace-preview-container {
-  margin-top: 10px;
+  margin-top: 12px;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-5px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 .workspace-preview {
-  padding: 15px;
+  padding: 18px;
   background-color: var(--preview-bg);
-  border-radius: 6px;
+  border-radius: 10px;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.05);
 }
 
 .preview-header {
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 600;
   color: var(--text-color);
-  margin-bottom: 10px;
+  margin-bottom: 14px;
+  letter-spacing: -0.3px;
 }
 
 .tabs-list {
   max-height: 250px;
   overflow-y: auto;
   padding-right: 10px; /* for scrollbar */
+  scrollbar-width: thin;
+}
+
+.tabs-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.tabs-list::-webkit-scrollbar-track {
+  background: var(--container-bg);
+  border-radius: 10px;
+}
+
+.tabs-list::-webkit-scrollbar-thumb {
+  background: var(--toggle-bg);
+  border-radius: 10px;
 }
 
 .tab-item {
   display: flex;
   align-items: center;
-  padding: 8px;
-  margin-bottom: 6px;
-  border-radius: 4px;
+  padding: 10px;
+  margin-bottom: 8px;
+  border-radius: 8px;
   background-color: var(--container-bg);
   border: 1px solid var(--item-border);
+  transition: transform 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.tab-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.08);
 }
 
 .tab-favicon {
   width: 16px;
   height: 16px;
-  margin-right: 10px;
+  margin-right: 12px;
   flex-shrink: 0;
 }
 
@@ -503,7 +573,7 @@ button:active {
 }
 
 .tab-title {
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 500;
   color: var(--text-color);
   white-space: nowrap;
@@ -512,20 +582,20 @@ button:active {
 }
 
 .tab-url {
-  font-size: 11px;
+  font-size: 12px;
   color: var(--text-color-muted);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  margin-top: 2px;
+  margin-top: 3px;
 }
 
 .more-tabs-note {
-  font-size: 12px;
+  font-size: 13px;
   font-style: italic;
   color: var(--text-color-muted);
   text-align: center;
-  padding: 8px;
+  padding: 10px;
 }
 
 .advanced-feature {
@@ -545,11 +615,10 @@ button:active {
 }
 
 .export-btn {
-  background-color: var(--success-color);
-  padding: 5px 10px;
-  margin-right: 5px;
-  border-radius: 4px;
-  font-size: 12px;
+  background-color: grey;
+  padding: 8px;
+  border-radius: 8px;
+  font-size: 13px;
   border: none;
   cursor: pointer;
   color: white;
@@ -586,17 +655,12 @@ body.dark-mode .mode-toggle input:focus + .slider {
   box-shadow: 0 0 1px #b39ddb;
 }
 
-body.dark-mode #update-tabs, body.dark-mode #import-workspaces {
+body.dark-mode #update-tabs, body.dark-mode #import-workspaces, body.dark-mode .update-btn {
   color: #202124;
 }
 
 body.dark-mode .highlight-text {
   color: #202124;
-}
-
-body.dark-mode button {
-  /* Remove this as it's causing issues with button text colors */
-  /* color: #202124; */
 }
 
 body.dark-mode #add-category, body.dark-mode #export-all, body.dark-mode .preview-btn, body.dark-mode #cancel-update {
@@ -608,7 +672,8 @@ body.dark-mode .delete-btn, body.dark-mode #save-tabs, body.dark-mode .open-btn,
 }
 
 body.dark-mode #workspace-name::placeholder,
-body.dark-mode #search-workspaces::placeholder {
+body.dark-mode #search-workspaces::placeholder,
+body.dark-mode #dialog-input::placeholder {
   color: var(--text-color-muted);
 }
 
@@ -632,14 +697,15 @@ body.dark-mode .theme-toggle input:focus + .slider {
   min-height: 550px;
 }
 
-#workspace-name, #search-workspaces, #workspace-category, #category-filter {
+#workspace-name, #search-workspaces, #workspace-category, #category-filter, #dialog-input {
   color: var(--text-color);
 }
 
 body.dark-mode #workspace-name, 
 body.dark-mode #search-workspaces, 
 body.dark-mode #workspace-category, 
-body.dark-mode #category-filter {
+body.dark-mode #category-filter,
+body.dark-mode #dialog-input {
   color: var(--text-color);
 }
 
@@ -660,10 +726,6 @@ body.dark-mode .export-btn {
   background-color: var(--warning-color-hover);
 }
 
-.workspace-preview-container {
-  /* This container will hold the preview, positioned as a sibling to the workspace item */
-}
-
 /* Modal Styles */
 .modal {
   display: none; /* Hidden by default */
@@ -675,22 +737,31 @@ body.dark-mode .export-btn {
   height: 100%;
   overflow: auto; /* Enable scroll if needed */
   background-color: var(--modal-overlay);
+  opacity: 0;
+  animation: fadeIn 0.2s ease forwards;
 }
 
 .modal-content {
   background-color: var(--container-bg);
-  margin: 25% auto; /* 25% from the top and centered */
-  padding: 20px;
+  margin: 20% auto; /* 20% from the top and centered */
+  padding: 24px;
   border: 1px solid var(--header-border);
-  width: 80%;
-  max-width: 320px;
-  border-radius: 8px;
-  box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+  width: 85%;
+  max-width: 340px;
+  border-radius: 14px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+  transform: translateY(-10px);
+  opacity: 0;
+  animation: slideUp 0.3s ease 0.1s forwards;
+}
+
+@keyframes slideUp {
+  to { transform: translateY(0); opacity: 1; }
 }
 
 .modal-header {
-  padding: 0 0 15px;
-  margin-bottom: 15px;
+  padding: 0 0 16px;
+  margin-bottom: 16px;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -699,6 +770,7 @@ body.dark-mode .export-btn {
 
 .modal-header h2 {
   margin-bottom: 0;
+  font-size: 20px;
 }
 
 .close-modal {
@@ -706,27 +778,44 @@ body.dark-mode .export-btn {
   font-size: 28px;
   font-weight: bold;
   cursor: pointer;
+  height: 28px;
+  width: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.2s ease;
 }
 
 .close-modal:hover,
 .close-modal:focus {
   color: var(--text-color);
-  text-decoration: none;
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+.modal-body {
+  margin-bottom: 16px;
 }
 
 .modal-body p {
-  margin: 0;
+  margin: 0 0 16px;
   color: var(--text-color-muted);
   line-height: 1.5;
+  font-size: 15px;
 }
 
 .modal-footer {
   display: flex;
   justify-content: flex-end;
-  gap: 10px;
-  padding-top: 15px;
-  margin-top: 15px;
+  gap: 12px;
+  padding-top: 16px;
+  margin-top: 0;
   border-top: 1px solid var(--header-border);
+}
+
+#dialog-input {
+  margin: 16px 0;
+  width: 100%;
 }
 
 .btn-secondary {
@@ -750,4 +839,11 @@ body.dark-mode .export-btn,
 body.dark-mode #cancel-update,
 body.dark-mode .btn-secondary {
   color: white;
+}
+
+/* Improve button icon alignments */
+button i {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }

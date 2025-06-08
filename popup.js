@@ -1,6 +1,18 @@
 // Import the storage manager
 import storageManager from './storage-manager.js';
 
+// Security helper function to sanitize strings
+function sanitizeString(str) {
+  if (!str) return '';
+  
+  // Create a temporary element
+  const tempElement = document.createElement('div');
+  // Set the string as text content (which escapes HTML)
+  tempElement.textContent = str;
+  // Return the escaped HTML
+  return tempElement.innerHTML;
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
   // UI Elements
   const workspaceNameInput = document.getElementById('workspace-name');
@@ -61,10 +73,34 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
 
   // Reusable dialog function
-  function showDialog(title, message, buttons) {
+  function showDialog(title, message, buttons, needInput = false) {
     dialogTitle.textContent = title;
     dialogMessage.textContent = message;
     dialogFooter.innerHTML = ''; // Clear previous buttons
+
+    // Add input field if needed
+    const dialogMessageContainer = document.getElementById('dialog-message-container');
+    
+    // Remove existing input if any
+    const existingInput = document.getElementById('dialog-input');
+    if (existingInput) {
+      existingInput.remove();
+    }
+    
+    // Add input field if needed
+    if (needInput) {
+      const inputElement = document.createElement('input');
+      inputElement.type = 'text';
+      inputElement.id = 'dialog-input';
+      inputElement.placeholder = 'Enter text here...';
+      inputElement.className = 'dialog-input';
+      dialogMessageContainer.appendChild(inputElement);
+      
+      // Focus the input after the dialog is shown
+      setTimeout(() => {
+        inputElement.focus();
+      }, 100);
+    }
 
     buttons.forEach(button => {
       const btn = document.createElement('button');
@@ -269,44 +305,58 @@ document.addEventListener('DOMContentLoaded', async () => {
   
   // Function to add a new category
   async function addNewCategory() {
-    const newCategory = prompt('Enter a new category name:');
-    
-    if (!newCategory || newCategory.trim() === '') {
-      return;
-    }
-    
-    try {
-      const categories = await storageManager.getCategories();
-      
-      // Check if category already exists
-      if (categories.includes(newCategory)) {
-        alert('This category already exists.');
-        return;
-      }
-      
-      // Add new category
-      categories.push(newCategory);
-      
-      // Save updated categories
-      const result = await storageManager.saveData({ categories });
-      
-      if (result.success) {
-        loadCategories();
-        
-        // Select the new category
-        workspaceCategorySelect.value = newCategory;
-      } else {
-        alert(`Error adding category: ${result.error}`);
-        
-        if (result.syncDisabled) {
-          syncToggle.checked = false;
-          alert('Sync has been disabled due to storage limits.');
+    // Replace alert with custom dialog for new category input
+    showDialog('Add New Category', 'Enter a new category name:', [
+      {
+        text: 'Add',
+        class: 'btn-primary',
+        onClick: async () => {
+          const inputElement = document.getElementById('dialog-input');
+          const newCategory = inputElement ? inputElement.value.trim() : '';
+          
+          if (!newCategory) {
+            return;
+          }
+          
+          try {
+            const categories = await storageManager.getCategories();
+            
+            // Check if category already exists
+            if (categories.includes(newCategory)) {
+              showDialog('Error', 'This category already exists.', [{ text: 'OK', class: 'btn-primary' }]);
+              return;
+            }
+            
+            // Add new category
+            categories.push(newCategory);
+            
+            // Save updated categories
+            const result = await storageManager.saveData({ categories });
+            
+            if (result.success) {
+              loadCategories();
+              
+              // Select the new category
+              workspaceCategorySelect.value = newCategory;
+            } else {
+              showDialog('Error', `Error adding category: ${result.error}`, [{ text: 'OK', class: 'btn-primary' }]);
+              
+              if (result.syncDisabled) {
+                syncToggle.checked = false;
+                showDialog('Sync Disabled', 'Sync has been disabled due to storage limits.', [{ text: 'OK', class: 'btn-primary' }]);
+              }
+            }
+          } catch (error) {
+            console.error('Error adding category:', error);
+            showDialog('Error', 'Error adding category. Please try again.', [{ text: 'OK', class: 'btn-primary' }]);
+          }
         }
+      },
+      {
+        text: 'Cancel',
+        class: 'btn-secondary'
       }
-    } catch (error) {
-      console.error('Error adding category:', error);
-      alert('Error adding category. Please try again.');
-    }
+    ], true); // true flag indicates we need an input field
   }
   
   // Function to save current tabs as a workspace
@@ -315,7 +365,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const category = workspaceCategorySelect.value;
     
     if (!workspaceName) {
-      alert('Please enter a workspace name.');
+      showDialog('Error', 'Please enter a workspace name.', [{ text: 'OK', class: 'btn-primary' }]);
       return;
     }
     
@@ -332,9 +382,42 @@ document.addEventListener('DOMContentLoaded', async () => {
         
         // Check if workspace name already exists
         if (workspaces[workspaceName]) {
-          if (!confirm(`Workspace "${workspaceName}" already exists. Do you want to overwrite it?`)) {
-            return;
-          }
+          showDialog('Confirm Overwrite', `Workspace "${workspaceName}" already exists. Do you want to overwrite it?`, [
+            {
+              text: 'Overwrite',
+              class: 'delete-btn',
+              onClick: async () => {
+                // Save the new workspace
+                workspaces[workspaceName] = {
+                  tabs: tabsData,
+                  createdAt: new Date().toISOString(),
+                  tabCount: tabsData.length,
+                  category: category
+                };
+                
+                // Save the updated workspaces
+                const result = await storageManager.saveData({ workspaces });
+                
+                if (result.success) {
+                  workspaceNameInput.value = '';
+                  loadWorkspaces();
+                  showDialog('Success', `Workspace "${workspaceName}" saved with ${tabs.length} tabs.`, [{ text: 'OK', class: 'btn-primary' }]);
+                } else {
+                  showDialog('Error', `Error saving workspace: ${result.error}`, [{ text: 'OK', class: 'btn-primary' }]);
+                  
+                  if (result.syncDisabled) {
+                    syncToggle.checked = false;
+                    showDialog('Sync Disabled', 'Sync has been disabled due to storage limits.', [{ text: 'OK', class: 'btn-primary' }]);
+                  }
+                }
+              }
+            },
+            {
+              text: 'Cancel',
+              class: 'btn-secondary'
+            }
+          ]);
+          return;
         }
         
         // Save the new workspace
@@ -357,7 +440,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           
           if (result.syncDisabled) {
             syncToggle.checked = false;
-            alert('Sync has been disabled due to storage limits.');
+            showDialog('Sync Disabled', 'Sync has been disabled due to storage limits.', [{ text: 'OK', class: 'btn-primary' }]);
           }
         }
       } catch (error) {
@@ -375,7 +458,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       const categories = await storageManager.getCategories();
       
       if (Object.keys(workspaces).length === 0) {
-        alert('No workspaces to export.');
+        showDialog('Export Error', 'No workspaces to export.', [{ text: 'OK', class: 'btn-primary' }]);
         return;
       }
       
@@ -404,7 +487,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       }, 100);
     } catch (error) {
       console.error('Error exporting workspaces:', error);
-      alert('Error exporting workspaces. Please try again.');
+      showDialog('Export Error', 'Error exporting workspaces. Please try again.', [{ text: 'OK', class: 'btn-primary' }]);
     }
   }
   
@@ -413,11 +496,31 @@ document.addEventListener('DOMContentLoaded', async () => {
     const file = event.target.files[0];
     if (!file) return;
     
+    // Validate file type
+    if (file.type !== 'application/json' && !file.name.endsWith('.json')) {
+      showDialog('Import Error', 'Invalid file type. Please select a JSON file.', [{ text: 'OK', class: 'btn-primary' }]);
+      return;
+    }
+    
+    // Validate file size (max 5MB)
+    const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+    if (file.size > MAX_FILE_SIZE) {
+      showDialog('Import Error', 'File is too large. Maximum size is 5MB.', [{ text: 'OK', class: 'btn-primary' }]);
+      return;
+    }
+    
     const reader = new FileReader();
     
     reader.onload = async (e) => {
       try {
-        const importedData = JSON.parse(e.target.result);
+        // Safely parse JSON with a try/catch
+        let importedData;
+        try {
+          importedData = JSON.parse(e.target.result);
+        } catch (jsonError) {
+          throw new Error('Invalid JSON format: ' + jsonError.message);
+        }
+        
         const importedWorkspaces = importedData.workspaces || importedData; // Support both new and old format
         const importedCategories = importedData.categories || [];
         
@@ -426,37 +529,134 @@ document.addEventListener('DOMContentLoaded', async () => {
           throw new Error('Invalid workspaces data format.');
         }
         
-        // Check if each workspace has the required properties
+        // Check if each workspace has the required properties and sanitize data
+        const sanitizedWorkspaces = {};
+        
         for (const [name, workspace] of Object.entries(importedWorkspaces)) {
+          // Validate workspace structure
           if (!Array.isArray(workspace.tabs) || 
               !workspace.createdAt || 
               typeof workspace.tabCount !== 'number') {
             throw new Error(`Workspace "${name}" has invalid format.`);
           }
+          
+          // Sanitize workspace name and data
+          const sanitizedName = sanitizeString(name);
+          
+          // Sanitize and validate tabs data
+          const sanitizedTabs = workspace.tabs.map(tab => {
+            // Validate URL
+            let validUrl = tab.url;
+            try {
+              const url = new URL(tab.url);
+              // Only allow http and https protocols
+              if (url.protocol !== 'http:' && url.protocol !== 'https:') {
+                validUrl = 'about:blank';
+              }
+            } catch (e) {
+              validUrl = 'about:blank';
+            }
+            
+            return {
+              url: validUrl,
+              title: sanitizeString(tab.title || ''),
+              favIconUrl: tab.favIconUrl && tab.favIconUrl.startsWith('http') ? tab.favIconUrl : ''
+            };
+          });
+          
+          sanitizedWorkspaces[sanitizedName] = {
+            tabs: sanitizedTabs,
+            createdAt: workspace.createdAt,
+            tabCount: workspace.tabs.length,
+            category: sanitizeString(workspace.category || '')
+          };
         }
+        
+        // Sanitize categories
+        const sanitizedCategories = importedCategories.map(category => sanitizeString(category));
         
         // Get existing workspaces and categories
         const existingWorkspaces = await storageManager.getWorkspaces();
         const existingCategories = await storageManager.getCategories();
-        const duplicateNames = Object.keys(importedWorkspaces).filter(name => existingWorkspaces[name]);
+        const duplicateNames = Object.keys(sanitizedWorkspaces).filter(name => existingWorkspaces[name]);
         
         // Check for duplicates
         if (duplicateNames.length > 0) {
-          const overwrite = confirm(`${duplicateNames.length} workspace(s) with the same name already exist. Do you want to overwrite them?`);
-          
-          if (!overwrite) {
-            // Remove duplicates from imported workspaces
-            duplicateNames.forEach(name => {
-              delete importedWorkspaces[name];
-            });
-          }
+          showDialog('Confirm Import', `${duplicateNames.length} workspace(s) with the same name already exist. Do you want to overwrite them?`, [
+            {
+              text: 'Overwrite',
+              class: 'delete-btn',
+              onClick: async () => {
+                // Merge workspaces
+                const mergedWorkspaces = { ...existingWorkspaces, ...sanitizedWorkspaces };
+                
+                // Merge categories
+                const mergedCategories = [...new Set([...existingCategories, ...sanitizedCategories])];
+                
+                // Save merged data
+                const result = await storageManager.saveData({ 
+                  workspaces: mergedWorkspaces,
+                  categories: mergedCategories
+                });
+                
+                if (result.success) {
+                  loadCategories();
+                  loadWorkspaces();
+                  showDialog('Import Success', `Successfully imported ${Object.keys(sanitizedWorkspaces).length} workspace(s) and ${sanitizedCategories.length} categories.`, [{ text: 'OK', class: 'btn-primary' }]);
+                } else {
+                  showDialog('Import Error', `Error importing data: ${result.error}`, [{ text: 'OK', class: 'btn-primary' }]);
+                  
+                  if (result.syncDisabled) {
+                    syncToggle.checked = false;
+                    showDialog('Sync Disabled', 'Sync has been disabled due to storage limits.', [{ text: 'OK', class: 'btn-primary' }]);
+                  }
+                }
+              }
+            },
+            {
+              text: 'Skip Duplicates',
+              class: 'btn-secondary',
+              onClick: async () => {
+                // Remove duplicates from imported workspaces
+                duplicateNames.forEach(name => {
+                  delete sanitizedWorkspaces[name];
+                });
+                
+                // Merge workspaces without duplicates
+                const mergedWorkspaces = { ...existingWorkspaces, ...sanitizedWorkspaces };
+                
+                // Merge categories
+                const mergedCategories = [...new Set([...existingCategories, ...sanitizedCategories])];
+                
+                // Save merged data
+                const result = await storageManager.saveData({ 
+                  workspaces: mergedWorkspaces,
+                  categories: mergedCategories
+                });
+                
+                if (result.success) {
+                  loadCategories();
+                  loadWorkspaces();
+                  showDialog('Import Success', `Successfully imported ${Object.keys(sanitizedWorkspaces).length} workspace(s) and ${sanitizedCategories.length} categories.`, [{ text: 'OK', class: 'btn-primary' }]);
+                } else {
+                  showDialog('Import Error', `Error importing data: ${result.error}`, [{ text: 'OK', class: 'btn-primary' }]);
+                  
+                  if (result.syncDisabled) {
+                    syncToggle.checked = false;
+                    showDialog('Sync Disabled', 'Sync has been disabled due to storage limits.', [{ text: 'OK', class: 'btn-primary' }]);
+                  }
+                }
+              }
+            }
+          ]);
+          return;
         }
         
         // Merge workspaces
-        const mergedWorkspaces = { ...existingWorkspaces, ...importedWorkspaces };
+        const mergedWorkspaces = { ...existingWorkspaces, ...sanitizedWorkspaces };
         
         // Merge categories
-        const mergedCategories = [...new Set([...existingCategories, ...importedCategories])];
+        const mergedCategories = [...new Set([...existingCategories, ...sanitizedCategories])];
         
         // Save merged data
         const result = await storageManager.saveData({ 
@@ -467,20 +667,20 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (result.success) {
           loadCategories();
           loadWorkspaces();
-          alert(`Successfully imported ${Object.keys(importedWorkspaces).length} workspace(s) and ${importedCategories.length} categories.`);
+          showDialog('Import Success', `Successfully imported ${Object.keys(sanitizedWorkspaces).length} workspace(s) and ${sanitizedCategories.length} categories.`, [{ text: 'OK', class: 'btn-primary' }]);
         } else {
-          alert(`Error importing data: ${result.error}`);
+          showDialog('Import Error', `Error importing data: ${result.error}`, [{ text: 'OK', class: 'btn-primary' }]);
           
           if (result.syncDisabled) {
             syncToggle.checked = false;
-            alert('Sync has been disabled due to storage limits.');
+            showDialog('Sync Disabled', 'Sync has been disabled due to storage limits.', [{ text: 'OK', class: 'btn-primary' }]);
           }
         }
         
         // Reset file input
         importFileInput.value = '';
       } catch (error) {
-        alert(`Error importing data: ${error.message}`);
+        showDialog('Import Error', `Error importing data: ${error.message}`, [{ text: 'OK', class: 'btn-primary' }]);
         importFileInput.value = '';
       }
     };
@@ -611,20 +811,26 @@ document.addEventListener('DOMContentLoaded', async () => {
     const item = document.createElement('div');
     item.className = 'workspace-item';
     
-    let highlightedName = name;
+    let highlightedName = sanitizeString(name);
     if (searchQuery) {
       const regex = new RegExp(searchQuery, 'gi');
-      highlightedName = highlightedName.replace(regex, (match) => `<span class="highlight-text">${match}</span>`);
+      highlightedName = highlightedName.replace(regex, (match) => `<span class="highlight-text">${sanitizeString(match)}</span>`);
     }
+    
+    // Sanitize all data before using it in innerHTML
+    const sanitizedCategory = data.category ? sanitizeString(data.category) : '';
+    const tabCount = typeof data.tabCount === 'number' ? data.tabCount : 0;
+    const createdDate = formatDate(data.createdAt);
+    const updatedDate = data.updatedAt ? formatDate(data.updatedAt) : '';
 
     item.innerHTML = `
       <div>
         <span class="workspace-name">${highlightedName}</span>
         <div class="workspace-info">
-          <span class="tab-count">${data.tabCount} tabs</span> |
-          <span class="date">Saved on ${formatDate(data.createdAt)}</span>
-          ${data.category ? `<span class="category-badge">${data.category}</span>` : ''}
-          ${data.updatedAt ? `<span class="update-indicator">Updated on ${formatDate(data.updatedAt)}</span>` : ''}
+          <span class="tab-count">${tabCount} tabs</span> |
+          <span class="date">Saved on ${createdDate}</span>
+          ${sanitizedCategory ? `<span class="category-badge">${sanitizedCategory}</span>` : ''}
+          ${updatedDate ? `<span class="update-indicator">Updated on ${updatedDate}</span>` : ''}
         </div>
       </div>
       <div class="workspace-actions">
@@ -665,30 +871,38 @@ document.addEventListener('DOMContentLoaded', async () => {
   
   // Function to open all tabs in a workspace
   function openWorkspace(name, data) {
-    // Confirm before opening multiple tabs
-    if (!confirm(`Open all ${data.tabCount} tabs from "${name}"?`)) {
-      return;
-    }
-    
-    // Create new window with all tabs
-    chrome.windows.create({}, (newWindow) => {
-      // Close the default new tab
-      chrome.tabs.query({ windowId: newWindow.id }, (tabs) => {
-        const firstTabId = tabs[0].id;
-        
-        // Create all workspace tabs
-        data.tabs.forEach((tab, index) => {
-          chrome.tabs.create({
-            windowId: newWindow.id,
-            url: tab.url,
-            active: index === 0
+    // Replace confirm with custom dialog
+    showDialog('Open Workspace', `Open all ${data.tabCount} tabs from "${name}"?`, [
+      {
+        text: 'Open',
+        class: 'btn-primary',
+        onClick: () => {
+          // Create new window with all tabs
+          chrome.windows.create({}, (newWindow) => {
+            // Close the default new tab
+            chrome.tabs.query({ windowId: newWindow.id }, (tabs) => {
+              const firstTabId = tabs[0].id;
+              
+              // Create all workspace tabs
+              data.tabs.forEach((tab, index) => {
+                chrome.tabs.create({
+                  windowId: newWindow.id,
+                  url: tab.url,
+                  active: index === 0
+                });
+              });
+              
+              // Remove the default tab after creating all workspace tabs
+              chrome.tabs.remove(firstTabId);
+            });
           });
-        });
-        
-        // Remove the default tab after creating all workspace tabs
-        chrome.tabs.remove(firstTabId);
-      });
-    });
+        }
+      },
+      {
+        text: 'Cancel',
+        class: 'btn-secondary'
+      }
+    ]);
   }
   
   // Function to delete a workspace
@@ -765,26 +979,75 @@ document.addEventListener('DOMContentLoaded', async () => {
     const previewContainer = document.createElement('div');
     previewContainer.className = 'workspace-preview-container';
 
-    let tabsHtml = data.tabs.slice(0, 10).map(tab => `
-      <div class="tab-item">
-        <img src="${tab.favIconUrl || 'images/icon16.png'}" class="tab-favicon" alt="">
-        <div class="tab-info">
-          <div class="tab-title">${tab.title || 'No Title'}</div>
-          <div class="tab-url">${truncateUrl(tab.url)}</div>
-        </div>
-      </div>
-    `).join('');
-
+    // Sanitize workspace name
+    const sanitizedName = sanitizeString(name);
+    
+    // Create a document fragment to build the preview content safely
+    const fragment = document.createDocumentFragment();
+    const previewDiv = document.createElement('div');
+    previewDiv.className = 'workspace-preview';
+    
+    // Create the header
+    const headerDiv = document.createElement('div');
+    headerDiv.className = 'preview-header';
+    headerDiv.textContent = `Previewing "${sanitizedName}"`;
+    previewDiv.appendChild(headerDiv);
+    
+    // Create the tabs list
+    const tabsListDiv = document.createElement('div');
+    tabsListDiv.className = 'tabs-list';
+    
+    // Add tab items (limit to 10)
+    const tabsToShow = data.tabs.slice(0, 10);
+    tabsToShow.forEach(tab => {
+      const tabItem = document.createElement('div');
+      tabItem.className = 'tab-item';
+      
+      // Create favicon image
+      const img = document.createElement('img');
+      img.className = 'tab-favicon';
+      img.alt = '';
+      
+      // Validate favicon URL or use default
+      if (tab.favIconUrl && tab.favIconUrl.startsWith('http')) {
+        img.src = tab.favIconUrl;
+      } else {
+        img.src = 'images/icon16.png';
+      }
+      
+      // Create tab info container
+      const tabInfo = document.createElement('div');
+      tabInfo.className = 'tab-info';
+      
+      // Create title element
+      const titleDiv = document.createElement('div');
+      titleDiv.className = 'tab-title';
+      titleDiv.textContent = tab.title || 'No Title';
+      
+      // Create URL element
+      const urlDiv = document.createElement('div');
+      urlDiv.className = 'tab-url';
+      urlDiv.textContent = truncateUrl(tab.url || '');
+      
+      // Assemble the tab item
+      tabInfo.appendChild(titleDiv);
+      tabInfo.appendChild(urlDiv);
+      tabItem.appendChild(img);
+      tabItem.appendChild(tabInfo);
+      tabsListDiv.appendChild(tabItem);
+    });
+    
+    // Add the "more tabs" note if needed
     if (data.tabs.length > 10) {
-      tabsHtml += `<div class="more-tabs-note">... and ${data.tabs.length - 10} more tabs</div>`;
+      const moreTabsNote = document.createElement('div');
+      moreTabsNote.className = 'more-tabs-note';
+      moreTabsNote.textContent = `... and ${data.tabs.length - 10} more tabs`;
+      tabsListDiv.appendChild(moreTabsNote);
     }
-
-    previewContainer.innerHTML = `
-      <div class="workspace-preview">
-        <div class="preview-header">Previewing "${name}"</div>
-        <div class="tabs-list">${tabsHtml}</div>
-      </div>
-    `;
+    
+    // Assemble the preview
+    previewDiv.appendChild(tabsListDiv);
+    previewContainer.appendChild(previewDiv);
     
     // Insert the preview container *after* the workspace item.
     workspaceItem.after(previewContainer);
@@ -820,7 +1083,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       URL.revokeObjectURL(url);
     } catch (error) {
       console.error('Error exporting workspace:', error);
-      alert('Error exporting workspace. Please try again.');
+      showDialog('Export Error', 'Error exporting workspace. Please try again.', [{ text: 'OK', class: 'btn-primary' }]);
     }
   }
 
