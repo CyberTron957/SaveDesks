@@ -26,6 +26,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const exportButton = document.getElementById('export-workspaces');
   const importButton = document.getElementById('import-workspaces');
   const importFileInput = document.getElementById('import-file');
+  const importFileNameSpan = document.getElementById('import-file-name');
   const syncToggle = document.getElementById('sync-toggle');
   const modeToggle = document.getElementById('mode-toggle');
   const themeToggle = document.getElementById('theme-toggle');
@@ -53,7 +54,14 @@ document.addEventListener('DOMContentLoaded', async () => {
   saveTabsButton.addEventListener('click', saveCurrentTabs);
   exportButton.addEventListener('click', exportWorkspaces);
   importButton.addEventListener('click', () => importFileInput.click());
-  importFileInput.addEventListener('change', importWorkspaces);
+  importFileInput.addEventListener('change', (event) => {
+    if (importFileInput.files && importFileInput.files.length > 0) {
+      importFileNameSpan.textContent = importFileInput.files[0].name;
+    } else {
+      importFileNameSpan.textContent = '';
+    }
+    importWorkspaces(event);
+  });
   addCategoryButton.addEventListener('click', addNewCategory);
   categoryFilterSelect.addEventListener('change', loadWorkspaces);
   syncToggle.addEventListener('change', toggleSync);
@@ -1122,4 +1130,4 @@ document.addEventListener('DOMContentLoaded', async () => {
       document.body.classList.remove('dark-mode');
     }
   }
-}); 
+});

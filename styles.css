@@ -225,16 +225,11 @@ button {
   transition: all 0.2s ease;
   color: white;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  background-color: var(--primary-color);
 }
 
 button:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-}
-
-button:active {
-  transform: translateY(0);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  background-color: var(--primary-color-hover);
 }
 
 /* Primary buttons */
@@ -846,4 +841,85 @@ button i {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+}
+
+/* --- Improved Import/Export and File Input Styles --- */
+#export-workspaces {
+  background-color: var(--success-color);
+  color: white;
+  margin-right: 8px;
+}
+#export-workspaces:hover {
+  background-color: var(--success-color-hover);
+}
+#import-workspaces {
+  background-color: var(--primary-color);
+  color: white;
+  margin-right: 8px;
+  position: relative;
+  z-index: 1;
+}
+#import-workspaces:hover {
+  background-color: var(--primary-color-hover);
+}
+#import-file {
+  display: none;
+}
+.file-name {
+  display: inline-block;
+  margin-left: 8px;
+  font-size: 13px;
+  color: var(--text-color-muted);
+  vertical-align: middle;
+  max-width: 160px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* --- General Button Tweaks for Better Contrast --- */
+button {
+  border: none;
+  padding: 10px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 15px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  color: white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  background-color: var(--primary-color);
+}
+button:hover {
+  background-color: var(--primary-color-hover);
+}
+
+/* --- Light/Dark Mode Button Color Fixes --- */
+body.dark-mode #import-workspaces {
+  background-color: #8ab4f8;
+  color: #202124;
+}
+body.dark-mode #import-workspaces:hover {
+  background-color: #a1c2fa;
+}
+body.dark-mode #export-workspaces {
+  background-color: #81c995;
+  color: #202124;
+}
+body.dark-mode #export-workspaces:hover {
+  background-color: #a4d4b2;
+}
+
+/* --- Input and Select Color Tweaks --- */
+#search-workspaces, #category-filter {
+  background-color: var(--input-bg);
+  color: var(--text-color);
+  border: 1px solid var(--input-border);
+  border-radius: 8px;
+  padding: 10px 14px;
+  margin-bottom: 8px;
+}
+#search-workspaces:focus, #category-filter:focus {
+  border-color: var(--input-focus-border);
+  outline: none;
 }

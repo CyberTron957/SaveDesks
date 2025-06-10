@@ -54,21 +54,21 @@
       <button id="export-workspaces">Export All</button>
       <button id="import-workspaces">Import</button>
       <input type="file" id="import-file" accept=".json" style="display: none;">
-    </div>
-    
-    <div class="filter-section">
-      <div class="search-container advanced-feature">
-        <input type="text" id="search-workspaces" placeholder="Search workspaces...">
-        <button id="clear-search" title="Clear Search"><i class="bi bi-x-lg"></i></button>
-      </div>
-      <select id="category-filter">
-        <option value="all">All Categories</option>
-        <option value="">No Category</option>
-      </select>
+      <span id="import-file-name" class="file-name"></span>
     </div>
     
     <div class="workspaces-section">
       <h2>Your Workspaces</h2>
+      <div class="filter-section">
+        <div class="search-container advanced-feature">
+          <input type="text" id="search-workspaces" placeholder="Search workspaces...">
+          <button id="clear-search" title="Clear Search"><i class="bi bi-x-lg"></i></button>
+        </div>
+        <select id="category-filter">
+          <option value="all">All Categories</option>
+          <option value="">No Category</option>
+        </select>
+      </div>
       <div id="workspaces-list"></div>
     </div>
     
@@ -109,4 +109,4 @@
   
   <script src="popup.js" type="module"></script>
 </body>
-</html> 
+</html>
